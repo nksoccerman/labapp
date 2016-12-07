@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  h1.
+    Systems
+
+  ul
+    each system, i in systemlist
+      li
+        h2 #{system.name} 
