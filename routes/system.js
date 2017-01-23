@@ -66,7 +66,7 @@ router.get('/updateSystem', function(req, res) {
   //TODO: another verification check! don't want random ppl...
   core.updateIPs();
   core.doSSH();
-  res.render('dash');
+  res.redirect('/');
 });
 
 module.exports = router;

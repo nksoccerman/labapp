@@ -7,7 +7,7 @@
 6 silly lifecycle labapp@0.0.0~prestart: no script for prestart, continuing
 7 info lifecycle labapp@0.0.0~start: labapp@0.0.0
 8 verbose lifecycle labapp@0.0.0~start: unsafe-perm in lifecycle true
-9 verbose lifecycle labapp@0.0.0~start: PATH: /usr/lib/node_modules/npm/bin/node-gyp-bin:/home/kostern/Documents/reed/labapp/labapp/node_modules/.bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
+9 verbose lifecycle labapp@0.0.0~start: PATH: /usr/lib/node_modules/npm/bin/node-gyp-bin:/home/kostern/Documents/reed/labapp/labapp/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 10 verbose lifecycle labapp@0.0.0~start: CWD: /home/kostern/Documents/reed/labapp/labapp
 11 silly lifecycle labapp@0.0.0~start: Args: [ '-c', 'node ./bin/www' ]
 12 silly lifecycle labapp@0.0.0~start: Returned: code: 1  signal: null

@@ -14,7 +14,7 @@ block content
             .col-xs-3
               i.fa.fa-comments.fa-5x
             .col-xs-9.text-right
-              .huge #{users.num};
+              .huge #{totalUsers}
               div Online Users
         a(href='#')
           .panel-footer
@@ -29,7 +29,7 @@ block content
             .col-xs-3
               i.fa.fa-tasks.fa-5x
             .col-xs-9.text-right
-              .huge #{cpu.usage}
+              .huge #{totalCpu}
               div CPU Usage
         a(href='#')
           .panel-footer
@@ -44,7 +44,7 @@ block content
             .col-xs-3
               i.fa.fa-shopping-cart.fa-5x
             .col-xs-9.text-right
-              .huge #{machines.on}/#{machines.total}
+              .huge #{machinesUp}
               div Machines Online
         a(href='#')
           .panel-footer
@@ -59,7 +59,7 @@ block content
             .col-xs-3
               i.fa.fa-support.fa-5x
             .col-xs-9.text-right
-              .huge #{files.open}
+              .huge #{totalFiles}
               div Files Open
         a(href='#')
           .panel-footer
