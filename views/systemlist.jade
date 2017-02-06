@@ -4,7 +4,21 @@ block content
   h1.
     Systems
 
-  ul
+  div.row
     each system, i in systemlist
-      li
-        h2 #{system.name} 
+      div.col-lg-4
+        div.panel.panel-primary
+          div.panel-heading
+            | #{system.name}
+          div.panel-body
+            | IP: #{system.ip}
+            br
+            | Hostname: #{system.hostname}
+            br
+            p.fa.fa-dashboard
+              | CPU: #{system.cpu}
+            br
+            | Open Files: #{system.openFiles}
+            br
+            | Users: #{system.users}
+            br

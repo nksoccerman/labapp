@@ -3,18 +3,46 @@ var router = express.Router();
 var ping = require('net-ping');
 const dns = require('dns');
 var core = require('../core');
+var schemas = require('../schemas');
+var async = require('async');
 
 router.get('/', function(req, res, next){
   var db = req.db;
-  var collection = db.get('systems');
-  collection.find({}, {}, function(e, docs){
-    res.render('systemlist', {
+  var System = db.model('system', schemas.System);
+  System.find(function(e, docs){
+      res.render('systemlist', {
      'systemlist' : docs });
-  });  
+  });
+});
+
+//Temporary work-around for moving stats to systems
+router.get('/sanitize', function(req, res, next) { 
+  var db = req.db;
+  var Stat = db.model('sysstat', schemas.Stat);
+  var System = db.model('system', schemas.System);
+  console.log('hit sanitizer..');
+  System.find({}, function(e, docs) {
+    async.each(docs, function(system, callback) {
+      console.log(system);
+      Stat.findOne({ip: system.ip}, function(err, stat) {
+        if(stat && !err) {
+          System.findByIdAndUpdate(system._id, {stats: stat.toObject()}, function(error, sys) {
+            if(error) callback(error);
+            callback();
+          });
+        }
+      });
+    }, function(err) { 
+        if(err) console.log(err);
+        else console.log('done');
+    });
+  });
 });
 
 router.post('/addSystem', function(req, res) {
-  var db = req.db
+  var db = req.db;
+  var System = db.model('system', schemas.System);
+
   try {
     var systemName = req.systemename;
     var systemIP = req.systemIP;
@@ -27,10 +55,9 @@ router.post('/addSystem', function(req, res) {
   } catch(err){
     res.send('Bad request'); //bad error handler
   }
-  var collection = db.get('systems');
   //TODO: add name check
 
-  collection.insert({
+  var sys = new System({
    'name': systemName,
    'ip': systemIP,
    'os' : systemOS,
@@ -39,21 +66,25 @@ router.post('/addSystem', function(req, res) {
    'adminPass' : systemAdminPass, //TODO: add hashes and password database
    'flags': sshFlags,
    'isUP': false,
-   'lastCheck': 0 //TODO: time value integration
-   }, function(err, docs) {
-     if(err) {
-       res.send("Error inserting into database");
-     } else {
-       res.redirect("systems");
-     }
-   });
+   'lastCheck': 0,
+  }); 
+   //TODO: time value integration
+
+  sys.save(function(err, doc) {
+   if(err) {
+     res.send("Error inserting into database");
+   } else {
+     res.redirect("systems");
+   }
+  });
+
 });
 
 router.post('/removeSystem', function(req, res) {
   var db = req.db;
-  var systems = db.get('systems');
+  var System = db.model('system', schemas.System);
   //TODO: add verification checking here!
-  users.remove({ 'name' : req.name}, function(err, docs) {
+  System.remove({ 'name' : req.name}, function(err) {
     if(err) {
       next(err);
     } else {
@@ -64,8 +95,8 @@ router.post('/removeSystem', function(req, res) {
 
 router.get('/updateSystem', function(req, res) {
   //TODO: another verification check! don't want random ppl...
-  core.updateIPs();
-  core.doSSH();
+  core.updateIPs(req.db);
+  core.doSSH(req.db);
   res.redirect('/');
 });
 

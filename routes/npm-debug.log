@@ -1,13 +1,13 @@
 0 info it worked if it ends with ok
 1 verbose cli [ '/usr/bin/nodejs', '/usr/bin/npm', 'start' ]
-2 info using npm@3.10.8
-3 info using node@v6.9.1
+2 info using npm@3.10.10
+3 info using node@v6.9.4
 4 verbose run-script [ 'prestart', 'start', 'poststart' ]
 5 info lifecycle labapp@0.0.0~prestart: labapp@0.0.0
 6 silly lifecycle labapp@0.0.0~prestart: no script for prestart, continuing
 7 info lifecycle labapp@0.0.0~start: labapp@0.0.0
 8 verbose lifecycle labapp@0.0.0~start: unsafe-perm in lifecycle true
-9 verbose lifecycle labapp@0.0.0~start: PATH: /usr/lib/node_modules/npm/bin/node-gyp-bin:/home/kostern/Documents/reed/labapp/labapp/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+9 verbose lifecycle labapp@0.0.0~start: PATH: /usr/lib/node_modules/npm/bin/node-gyp-bin:/home/kostern/Documents/reed/labapp/labapp/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
 10 verbose lifecycle labapp@0.0.0~start: CWD: /home/kostern/Documents/reed/labapp/labapp
 11 silly lifecycle labapp@0.0.0~start: Args: [ '-c', 'node ./bin/www' ]
 12 silly lifecycle labapp@0.0.0~start: Returned: code: 1  signal: null
@@ -24,10 +24,10 @@
 14 verbose stack     at Process.ChildProcess._handle.onexit (internal/child_process.js:226:5)
 15 verbose pkgid labapp@0.0.0
 16 verbose cwd /home/kostern/Documents/reed/labapp/labapp/routes
-17 error Linux 3.18.0-13101-g57e8190
+17 error Linux 3.18.0-13437-g2bea612c
 18 error argv "/usr/bin/nodejs" "/usr/bin/npm" "start"
-19 error node v6.9.1
-20 error npm  v3.10.8
+19 error node v6.9.4
+20 error npm  v3.10.10
 21 error code ELIFECYCLE
 22 error labapp@0.0.0 start: `node ./bin/www`
 22 error Exit status 1
