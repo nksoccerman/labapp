@@ -7,6 +7,15 @@ var schema = require('./schemas')
 //var exports = module.exports = {}
 //exports and module.exports both point to the object returned from require()
 
+//Commands to run on child servers
+var userCMD = "sudo who -q | awk 'NR==1'";
+var cpuCMD = 'sudo top -bn1 | grep "Cpu(s)" | ' + 
+           'sed "s/.*, *\\([0-9.]*\\)%* id.*/\\1/" | ' + 
+           "awk '{print 100 - $1\"%\"}'"; 
+var diskSpaceCMD = "df -h | grep $(mount | sed -n '1p' | awk '{print $1}')";
+var programmingVersCMD = "python -V; perl -v; go version; gcc -v; nodejs -v; npm -v; mongod --version; make -v; apt --version; bash --version; cpp --version; java -version; g++ --version"
+
+ 
 function getMachines(db, callback){
   var machines = {num: 0, up: []};
   var System = db.model('system', schema.System);
@@ -68,10 +77,6 @@ exports.updateIPs = function(db) {
 
 exports.doSSH = function(db) {
   var System = db.model('system', schema.System);
-  var userCMD = "sudo who -q | awk 'NR==1'";
-  var cpuCMD = 'sudo top -bn1 | grep "Cpu(s)" | ' + 
-           'sed "s/.*, *\\([0-9.]*\\)%* id.*/\\1/" | ' + 
-           "awk '{print 100 - $1\"%\"}'"; 
   getMachines(db, function(machines) {
     console.log(machines);
     machines.up.forEach(function(ip) {
@@ -90,6 +95,11 @@ exports.doSSH = function(db) {
 	out: function(stdout) {
 	   cpuCb(db, stdout, ip)
 	}
+      }).exec(programmingVersCMD, {
+        pty: true, 
+        out: function(stdout) {
+          versCb(db, stdout, ip)
+        }
       }).start();
     });
   });
@@ -134,5 +144,29 @@ function fileCb(db, data, ip){
   });
 }
  
-
-
+function versCb(db, data, ip){
+  var System = db.model('system', schema.System);
+  var vers = "";
+  async.forEach(data.split("\r\n"), function(line, cb) {
+    if(line.includes("Python")) {
+      vers = line.replace('\r\n', '');
+    } else if(line.includes("perl")){
+      var startP = line.indexOf("(v");
+      var endP = line.indexOf(") b");
+      vers = "Perl " + line.substring(startP, endP);
+    } else if(line.includes("go version")) {
+      var start = line.indexOf("go version");
+      vers = "Go " + line.substring(start+start.length);
+    } 
+    cb();
+  }, function(err) {
+    console.log(vers);
+    if(vers != "") {
+      System.findOneAndUpdate({ip: ip}, 
+        {$push: {programmingVers: vers}},
+        {safe: true, upsert: true, new: true},  function(err, doc) {
+          console.log("updating versions: " + vers);
+      });
+    }
+  });
+}

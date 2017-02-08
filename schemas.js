@@ -13,7 +13,8 @@ exports.System = schema({
   os: String, 
   users: String, 
   cpu: String, 
-  openFiles: String 
+  openFiles: String, 
+  programmingVers: [String] 
 });
 
 exports.Stat = schema({
