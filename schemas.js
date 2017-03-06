@@ -1,6 +1,12 @@
 var mongoose = require('mongoose');
 var schema = mongoose.Schema; 
 
+var subDat = schema({
+ time: {type: String, default: Date.now()},
+ value: String
+},{_id:false});
+
+
 exports.System = schema({
   admin: String, 
   adminPass: String, 
@@ -11,10 +17,12 @@ exports.System = schema({
   lastCheck: Number, 
   name: String, 
   os: String, 
-  users: String, 
-  cpu: String, 
-  openFiles: String, 
-  programmingVers: [String] 
+  users: [String], 
+  cpu: [subDat],
+  openFiles: [subDat],
+  programmingVers: [
+    {name: String, version: String}
+  ] 
 });
 
 exports.Stat = schema({

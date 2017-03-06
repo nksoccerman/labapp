@@ -11,7 +11,8 @@ router.get('/', function(req, res, next){
   var System = db.model('system', schemas.System);
   System.find(function(e, docs){
       res.render('systemlist', {
-     'systemlist' : docs });
+     'systemlist' : docs
+     });
   });
 });
 
@@ -42,15 +43,13 @@ router.get('/sanitize', function(req, res, next) {
 router.post('/addSystem', function(req, res) {
   var db = req.db;
   var System = db.model('system', schemas.System);
-
+  console.log('hit-add system');
+  console.log(req.body.systemName); 
   try {
-    var systemName = req.systemename;
-    var systemIP = req.systemIP;
-    var systemOS = req.systemOS;
-    var systemHost = req.systemhost;
-    var systemAdmin = req.systemAdmin;
-    var systemAdminPass = req.systemAdminPass
-    var sshFlags = req.sshFlags
+    var systemName = req.body.systemName;
+    var systemIP = req.body.systemIP;
+    var systemOS = req.body.systemOS;
+    var systemHost = req.body.systemHostname;
     //blah blah add more
   } catch(err){
     res.send('Bad request'); //bad error handler
@@ -61,20 +60,15 @@ router.post('/addSystem', function(req, res) {
    'name': systemName,
    'ip': systemIP,
    'os' : systemOS,
-   'hostname': systemHost,
-   'admin' : systemAdmin,
-   'adminPass' : systemAdminPass, //TODO: add hashes and password database
-   'flags': sshFlags,
-   'isUP': false,
-   'lastCheck': 0,
+   'hostname': systemHost
   }); 
-   //TODO: time value integration
+   //TODO: time valu e integration
 
   sys.save(function(err, doc) {
    if(err) {
      res.send("Error inserting into database");
    } else {
-     res.redirect("systems");
+     res.send("Added to database.");
    }
   });
 

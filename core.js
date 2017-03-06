@@ -14,8 +14,8 @@ var cpuCMD = 'sudo top -bn1 | grep "Cpu(s)" | ' +
            "awk '{print 100 - $1\"%\"}'"; 
 var diskSpaceCMD = "df -h | grep $(mount | sed -n '1p' | awk '{print $1}')";
 var programmingVersCMD = "python -V; perl -v; go version; gcc -v; nodejs -v; npm -v; mongod --version; make -v; apt --version; bash --version; cpp --version; java -version; g++ --version"
+fileCMD = 'sudo lsof -w | wc -l';
 
- 
 function getMachines(db, callback){
   var machines = {num: 0, up: []};
   var System = db.model('system', schema.System);
@@ -50,27 +50,24 @@ function isMachineUP(ip, callback) {
 exports.updateIPs = function(db) {
   var System = db.model('system', schema.System);
   System.find({}, function(err, docs){
-    var session = ping.createSession();
+   // var session = ping.createSession();
     docs.forEach(function(system) {
       //first check if there's an ip!
-      if(!system.ip) {
-        var systemIP = dns.resolve4(system.hostname, function(err, addrs) { return addrs[0]}); //assign to first ip address
+      //if(system.ip == "" ) {
         dns.resolve4(system.hostname, function(err, addrs) { //try and find an ip address that pings!
           if(err) next(err)
-          addrs.forEach(function (ip) {
-            console.log(ip);
-            session.pingHost(ip, function(error, host){
-              if(!error)
-                System.update({name : system.name}, {$set: {ip: ip, isUP: true}});
-            });
+          console.log(addrs[0]);
+          console.log("system");
+          console.log(system);
+          //i removed the error checking code... had to.
+          System.update({_id: system._id}, {'ip': addrs[0]}, function(err, num){
+            console.log(num);
           });
-      });
-      } else {
-        session.pingHost(system.ip, function(error, host){
-          if(!error)
-            System.update({name: system.name}, {$set: {isUP: true}});
         });
-      }
+     // } else {
+       // session.pingHost(system.ip, function(error, host){
+         // if(!error)
+           // System.update({hostname: system.hostname}, {$set: {isUP: true}});
     });
   });
 }
@@ -78,7 +75,6 @@ exports.updateIPs = function(db) {
 exports.doSSH = function(db) {
   var System = db.model('system', schema.System);
   getMachines(db, function(machines) {
-    console.log(machines);
     machines.up.forEach(function(ip) {
       var ssh = new SSH({
         host: ip, 
@@ -100,6 +96,11 @@ exports.doSSH = function(db) {
         out: function(stdout) {
           versCb(db, stdout, ip)
         }
+      }).exec(fileCMD, {
+        pty: true, 
+        out: function(stdout) {
+          fileCb(db, stdout, ip);
+        }
       }).start();
     });
   });
@@ -108,19 +109,7 @@ exports.doSSH = function(db) {
 
 //each of these functions are callbacks that handle a response to a command over ssh then proccess it and post the results
 function userCb(db, data, ip) {
-  var fileCMD = data.replace(' ', ' -u ').replace('\r\n','');
-  fileCMD = 'sudo lsof -a -d txt -u ' + fileCMD + ' | wc -l';
-  var ssh = new SSH({host:ip, user:'polytopia', pass:'m47h14b$'});
-  console.log(fileCMD);
-  ssh.exec(fileCMD, {
-    out: function(stdout) {
-      fileCb(db, stdout, ip);
-    },
-    pty: true,
-    err: function(stderr) { //error handler... add some more
-      console.log(stderr)
-    }
-  }).start();
+  var fileCMD = data.replace('/ /g', ' -u ').replace('\r\n','');
   
   var System = db.model('system', schema.System);
   System.findOneAndUpdate({ip: ip}, {users: data.replace('\r\n', '').split(' ')}, function(err, doc){
@@ -132,39 +121,46 @@ function cpuCb(db, data, ip){
   var System = db.model('system', schema.System);
   var cpu_s = data.replace('\r\n', '').replace('%', '');
   var cpu_i = parseFloat(cpu_s);
-  System.findOneAndUpdate({ip: ip}, {cpu: cpu_i}, function(err, doc) {
-    console.log("updating cpu: " + cpu_i);
+  System.findOneAndUpdate({ip: ip}, 
+    {$push: {cpu: {value: cpu_i}} },
+    {safe: true, upsert: true, new: true},function(err, doc) {
+      console.log("updating cpu: " + cpu_i);
   });
 }
 
 function fileCb(db, data, ip){
   var System = db.model('system', schema.System);
-  System.findOneAndUpdate({ip: ip}, {openFiles: data.replace('\r\n', '')}, function(err, doc) {
-    console.log("updating files: " + data);
+  var oF = data.replace('\r\n', '');
+  System.findOneAndUpdate({ip: ip}, 
+    {$push: {openFiles: {value: oF}} }, 
+    {safe: true, upsert: true, new: true}, function(err, doc) {
+      console.log("updating files: " + data);
   });
 }
  
 function versCb(db, data, ip){
   var System = db.model('system', schema.System);
-  var vers = "";
+  var vers = {name: "", version: ""};
   async.forEach(data.split("\r\n"), function(line, cb) {
     if(line.includes("Python")) {
-      vers = line.replace('\r\n', '');
-    } else if(line.includes("perl")){
-      var startP = line.indexOf("(v");
-      var endP = line.indexOf(") b");
-      vers = "Perl " + line.substring(startP, endP);
+      vers.version = line.replace('\r\n', '').split(' ')[1];
+      vers.name = "Python"; 
+    } else if(line.includes("This is perl")){
+      var regExp = /\(([^)]+)\)/;
+      vers.name = "Perl";
+      vers.version = regExp.exec(line)[1];
     } else if(line.includes("go version")) {
-      var start = line.indexOf("go version");
-      vers = "Go " + line.substring(start+start.length);
+      var start = line.indexOf(".");
+      vers.name = "Go";
+      vers.version = line.substring(start-1, line.indexOf('linux')-1);
     } 
     cb();
   }, function(err) {
-    console.log(vers);
-    if(vers != "") {
-      System.findOneAndUpdate({ip: ip}, 
+    console.log(vers); //TODO: what about if new version
+    if(vers.name != "") { //this query doesn't add if version is already there
+      System.findOneAndUpdate({ip: ip, "programmingVers.name" : {"$nin": [vers.name]}}, 
         {$push: {programmingVers: vers}},
-        {safe: true, upsert: true, new: true},  function(err, doc) {
+        {safe: true, upsert: false, new: false},  function(err, doc) {
           console.log("updating versions: " + vers);
       });
     }
